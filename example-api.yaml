@@ -1,0 +1,1587 @@
+openapi: "3.0.2"
+info:
+  version: "v2"
+  title: "MSB Pay API"
+  description: >-
+    API specification for payment processing via the MySchoolBucks.com cart checkout. <br />
+    <a href="MSBPayAPI-v2-changelog.txt">Changelog</a>
+servers:
+  - url: https://schoolbucks.msb-lab.com/msbpay/v2
+    description: Lab server
+  - url: https://test.www.myschoolbucks.com/msbpay/v2
+    description: QA server
+  - url: https://staging.www.myschoolbucks.com/msbpay/v2
+    description: Staging server
+  - url: https://www.myschoolbucks.com/msbpay/v2
+    description: Production server
+  
+paths:
+  /:
+    get:
+      tags:
+        - Utility
+      summary: System details
+      description: Returns details of API version, server node, and application version.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      responses:
+        '200':
+          description: Developer account information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsbPayResponse'
+        '401':
+          description: Invalid login
+        '500':
+          description: Server error
+
+  /whoAmI:
+    get:
+      tags:
+        - Utility
+      summary: Account details
+      description: Returns details of developer key's account holder and configuration.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      responses:
+        '200':
+          $ref: '#/components/responses/GetMsbPayUserResponse'
+        '401':
+          description: Invalid login
+        '500':
+          description: Server error
+
+  /testExceptions:
+    get:
+      tags:
+        - Utility
+      summary: Developer tool to test responses from exceptions.
+      description: Returns details of developer key's account holder and configuration.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - name: NotAuthorizedException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: ForbiddenException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: NotFoundException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: NotAllowedException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: NotAcceptableException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: NotSupportedException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: ClientErrorException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: InternalServerErrorException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: ServiceUnavailableException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: ServerErrorException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: WebApplicationException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: RuntimeException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: BadRequestException
+          in: query
+          schema:
+            type: string
+            format: string
+        - name: NullPointerException
+          in: query
+          schema:
+            type: string
+            format: string
+      responses:
+        '200':
+          description: Generic response with exception driven error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MsbPayResponse'
+        '401':
+          description: Invalid login
+        '500':
+          description: Server error
+          
+  /carts:
+    get:
+      tags:
+        - Cart
+      summary: Read carts for developer key
+      description: Returns list of carts created via this developer key.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - name: status
+          in: query
+          description: Status of API cart
+          required: false
+          schema:
+            $ref: '#/components/schemas/CartStatus'
+        - name: createdDateStart
+          in: query
+          description: Returns carts created on or after this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: createdDateEnd
+          in: query
+          description: Returns carts created on or before this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: updatedDateStart
+          in: query
+          description: Returns carts updated on or after this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: updatedDateEnd
+          in: query
+          description: Returns carts updated on or before this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: clientId
+          in: query
+          description: ID for MySchoolBucks district where the sale was recorded
+          required: false
+          schema:
+            type: string
+        - name: storeId
+          in: query
+          description: ID for the district-level store where the sale was recorded
+          required: false
+          schema:
+            type: string
+        - name: paymentMethodId
+          in: query
+          description: ID for the district-level payment method where the sale was recorded
+          required: false
+          schema:
+            type: string
+        - name: departmentId
+          in: query
+          description: ID for the optional district-level department where the sale was recorded
+          required: false
+          schema:
+            type: string
+        - name: itemId
+          in: query
+          description: ID for the cart item as configured when cart was created. <i>note - this is an exact match, no wildcard or partials will work</i>
+          required: false
+          schema:
+            type: string
+        - name: itemName
+          in: query
+          description: Name for the cart item as configured when cart was created. <i>note - this is an exact match, no wildcard or partials will work</i>
+          required: false
+          schema:
+            type: string
+        - name: studentName
+          in: query
+          description: Student name for the cart item if configured when cart was created. <i>note - this is an exact match, no wildcard or partials will work</i>
+          required: false
+          schema: 
+            type: string
+        - name: reference
+          in: query
+          description: Reference string created by your system for the cart item if configured when the cart was created. <i>note - this is an exact match, no wildcard or partials will work</i>
+          required: false
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/RowCountParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/GetCartsResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '500':
+          description: Server error
+    post:
+      tags:
+        - Cart
+      summary: Create cart
+      description: Prepares a cart to be processed in MySchoolBucks. Returns a new cart ID for the requested items.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUpdateCartRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreateUpdateCartResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '500':
+          description: Server error
+          
+  '/carts/{cartId}':
+    parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - $ref: '#/components/parameters/CartId'
+    get:
+      tags:
+        - Cart
+      summary: Get cart by ID
+      description: Returns a cart created via this developer key.
+      responses:
+        '200':
+          $ref: '#/components/responses/GetCartResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+    put:
+      tags:
+        - Cart
+      summary: Update cart
+      description: Replace the cart request with the supplied details. This does not patch the request, you will need to send the entire snapshot of the cart to update.
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUpdateCartRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateUpdateCartResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - Cart
+      summary: Delete cart
+      description: Cancels cart with supplied ID. Returns true if the cart was canceled, false otherwise.
+      responses:
+        '200':
+          $ref: '#/components/responses/BooleanResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+          
+  '/carts/{cartId}/addItems':
+    parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - $ref: '#/components/parameters/CartId'
+    post:
+      tags:
+        - Cart
+      summary: Create cart item
+      description: Add a new cart item to the request. This appends to the request, you will need to send an update to the cart to change or remove the current contents.
+      requestBody:
+        $ref: '#/components/requestBodies/CreateUpdateCartRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/CreateUpdateCartResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+    
+  '/carts/{cartId}/process':
+    parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - $ref: '#/components/parameters/CartId'
+    post:
+      tags:
+        - Cart
+      summary: Process cart
+      description: Process authorized cart created via this developer key and previously approved by customer. Process method only works on carts in Approved status.
+      responses:
+        '200':
+          $ref: '#/components/responses/ProcessCartResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+          
+  '/carts/{cartId}/orders':
+    parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - $ref: '#/components/parameters/CartId'
+    get:
+      tags:
+        - Payment
+      summary: Get orders for cart
+      description: Return list of orders for supplied cart. Orders are in intermediate structure between cart requests and payments.
+      responses:
+        '200':
+          $ref: '#/components/responses/GetCartOrdersResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+          
+  '/carts/{cartId}/payments':
+    parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - $ref: '#/components/parameters/CartId'
+    get:
+      tags:
+        - Payment
+      summary: Get payments for cart
+      description: Return list of payments for supplied cart.
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchPaymentsResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+          
+  '/carts/{cartId}/payments/{paymentId}/refund':
+    parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - $ref: '#/components/parameters/CartId'
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags:
+        - Refund
+      summary: Refund payment
+      description: Refunds partial or whole payments created by the Cart processing.
+      requestBody:
+        $ref: '#/components/requestBodies/CartPaymentRefundRequest'
+        required: true
+      responses:
+        '200':
+          $ref: '#/components/responses/CartPaymentRefundResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+          
+  '/clients/{clientId}/payments':
+    get:
+      tags:
+        - Reconciliation
+      summary: Get payments for client
+      description: Returns payments created by this developer key at indicated client
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/ClientId'
+        - name: cartId
+          in: query
+          description: Cart identifier assigned by MySchoolBucks
+          required: false
+          schema:
+            type: string
+        - name: transferConfirmed
+          in: query
+          description: Specify to filter for transfers with confirmed (true) or unconfirmed (false) status. Default is to return both types unfiltered.
+          required: false
+          schema:
+            type: boolean
+        - name: paymentType
+          in: query
+          description: Specify to filter for only sale or credit (refund, reversal, etc.) records. Default is to return all types unfiltered
+          required: false
+          schema:
+            $ref: '#/components/schemas/PaymentType'
+        - name: startDate
+          in: query
+          description: Returns carts created on or after this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Returns carts created on or before this date
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/RowCountParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchPaymentsResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not allowed
+        '500':
+          description: Server error
+          
+  '/clients/{clientId}/payments/{paymentId}/confirmtransfer':
+    parameters:
+      - $ref: '#/components/parameters/Authorization'
+      - $ref: '#/components/parameters/ClientId'
+      - $ref: '#/components/parameters/PaymentId'
+    post:
+      tags:
+        - Reconciliation
+      summary: Confirm payment
+      description: Records payment as confirmed by the sales agent application. Used to acknowledge payment status.
+      responses:
+        '200':
+          $ref: '#/components/responses/BooleanResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not allowed
+        '500':
+          description: Server error
+          
+  '/clients/{clientId}/paymentMethods':
+    get:
+      tags:
+        - Payment Methods
+      summary: Get payment methods
+      description: Returns IDs for payment methods associated with the client.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/RowCountParam'
+        - $ref: '#/components/parameters/SearchTextParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchPaymentMethodsResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+          
+  '/clients/{clientId}/stores':
+    get:
+      tags:
+        - Stores
+      summary: Get store IDs
+      description: Returns IDs for stores associated with the client.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/RowCountParam'
+        - $ref: '#/components/parameters/SearchTextParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchStoresResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+          
+  '/clients/{clientId}/departments':
+    get:
+      tags:
+        - Departments
+      summary: Get department IDs
+      description: Returns IDs for departments associated with the client
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/RowCountParam'
+        - $ref: '#/components/parameters/SearchTextParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchDepartmentsResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not allowed
+        '500':
+          description: Server error
+          
+  '/clients/{clientId}/glAccounts':
+    get:
+      tags:
+        - G/L Accounts
+      summary: Get G/L account IDs
+      description: Returns IDs for G/L Accounts associated with the client.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/ClientId'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/RowCountParam'
+        - $ref: '#/components/parameters/SearchTextParam'
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchGLAccountsResponse'
+        '400':
+          description: Input data/structure error
+        '401':
+          description: Invalid login
+        '403':
+          description: Not allowed
+        '404':
+          description: Resource not found
+        '500':
+          description: Server error
+      
+components:
+  schemas:
+  #BEGIN ENUM DEFINITIONS
+    MsbPayResult:
+      type: string
+      description: MSB Pay API method outcome
+      enum: 
+        - unknown
+        - success
+        - error
+    CartStatus:
+      type: string
+      description: Status for the cart
+      enum: 
+        - pending
+        - canceled
+        - authorized
+        - closed
+    PaymentTxnType:
+      type: string
+      description: Type of payment activity
+      enum:
+        - sale
+        - credit
+        - refund
+        - reversal
+        - preauth
+        - postauth
+    PaymentType:
+      type: string
+      description: Class of payment activity
+      enum:
+        - sale
+        - credit
+    OrderStatus:
+      type: string
+      description: Status for the order
+      enum:
+        - active
+        - canceled
+        - closed
+        - declined
+        - pending
+        - review
+        - void
+    PayApiEventType:
+      type: string
+      enum:
+        - ping
+        - cart.authorized
+        - cart.processed
+        - cart.canceled
+        - payment.settled
+        - payment.authorized
+        - payment.failed
+        - payment.refunded
+  #END ENUM DEFINITIONS
+  
+  #BEGIN DATA MODEL DEFINITIONS
+    MsbPayResponse:
+      type: object
+      properties:
+        result:
+          $ref: '#/components/schemas/MsbPayResult'
+        errors:
+          type: array
+          description: Error messages supplied if there are issues with method.
+          items:
+            type: string
+                  
+    MsbPayUser:
+      type: object
+      properties:
+        defaultClientId:
+          type: string
+          description: >-
+            ID for MySchoolBucks top level organizational unit this developer account is assigned to as a default (if null, no default is set)
+        developerAccountId:
+          type: string
+          description: Developer account ID
+        firstName:
+          type: string
+          description: First name for the developer account holder
+        lastName:
+          type: string
+          description: Last name of the developer account holder
+        email:
+          type: string
+          description: Email address for the developer account holder
+        clients:
+          type: array
+          description: MSB clients and default settings for each
+          items:
+            $ref: '#/components/schemas/MsbPayUserClient'
+    
+    MsbPayUserClient:
+      type: object
+      description: >-
+        Describes client settings assigned to the developer account
+      properties:
+        isEnabled:
+          type: boolean
+          description: >-
+            Indicates if the client is currently enabled for the developer account
+        clientId:
+          type: string
+          description: >-
+            ID for MySchoolBucks top level organizational unit
+        departmentId:
+          type: string
+          description: >-
+            Default ID for MySchoolBucks department that the sale for this client will be recorded (if null, no default is set)
+        storeId:
+          type: string
+          description: >-
+            Default store that the sale for this client will be recorded with (if null, no default is set)
+        paymentMethodId:
+         type: string
+         description: >-
+           Default payment method that sales for this client will be processed by (if null, no default is set)
+           
+    Cart:
+      type: object
+      description: MSB Pay cart model
+      properties:
+        id:
+          type: string
+          description: Identifier of the cart created by the request
+        status:
+          $ref: '#/components/schemas/CartStatus'
+        createdDate:
+          type: string
+          format: date-time
+          description: Date the cart was created and ID returned
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Date the cart was last updated
+        redirectUrl:
+          type: string
+          description: Url to navigate to after checkout is complete
+          maxLength: 1900
+        returnToSiteUrl:
+          type: string
+          description: Url that will be used at checkout to provide a back button to users
+          maxLength: 1900
+        checkoutUrl:
+          type: string
+          description: Send the customer here to complete checkout
+        allowDuplicatePayments: 
+          type: string
+          description: Will be "true" if set, "false" otherwise
+        loginPolicy:
+          type: string
+          description: Login policy for the cart. Either "optional" or null
+        checkoutStyle:
+          type: string
+          description: Checkout style to use. Either "express" or null
+        cartItems:
+          $ref: '#/components/schemas/CartItem'
+        paymentPreauthPolicy:
+          type: string
+          description: Payment preauthorization policy for the cart. Valid options are "none", "fullpay", or null
+        webhookSubscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookSubscription'
+            
+    WebhookSubscription:
+      type: object
+      description: MSB webhook subscription model
+      properties:
+        notifyUrl:
+          type: string
+          description: URL to notify of change
+        type:
+          $ref: '#/components/schemas/PayApiEventType'
+        isEnabled:
+          type: boolean
+          description: Will be "true" if webhook subscription is enabled, "false" otherwise
+        subscriptionId:
+          type: string
+          description: ID for the webhook subscription
+    
+    CartItem:
+      type: object
+      description: MSB Pay cart item model
+      properties:
+        clientId:
+          type: string
+          description: >-
+            ID for MySchoolBucks store that the sale should be recorded with for
+            reporting [Required if no default for dev account]
+        departmentId:
+          type: string
+          description: >-
+            ID for MySchoolBucks department that the sale should be recorded with for reporting
+        storeId:
+          type: string
+          description: >-
+            ID for MySchoolBucks store that the sale should be recorded with for reporting <i>[required if no default for dev account]</i>
+        itemId:
+          type: string
+          description: >-
+            ID for the MySchoolBucks item that the sale should be recorded with
+            for reporting
+        itemName:
+          type: string
+          description: >-
+            Name of item that the line items should display to user at checkout
+            and any receipts
+        paymentMethodId:
+          type: string
+          description: >-
+            ID for the MySchoolBucks payment method configuration that this
+            cart should process through <i>[required if no default for dev account]</i>
+        quantity:
+          type: string
+          description: Number of the items to purchase
+        unitPrice:
+          type: string
+          description: Dollar amount price for each item in purchase
+        displaySalesTaxRate:
+          type: number
+          description: Percentage used to calculate sales tax. Used only for records, not used in calculation. Field 'salesTaxAmount' is used in calculation of total in checkout
+        salesTaxAmount: 
+          type: number
+          description: Amount to be added in checkout for sales tax
+        studentName:
+          type: string
+          description: Student name to be included in the checkout display and on receipts
+        reference:
+          type: string
+          description: Recorded for reporting
+        properties:
+          type: array
+          description: >-
+            Array of additional properties to be recorded with the order and
+            payment line items
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+        glAccountId:
+          type: string
+          description: GL Account to which the payments for this item will be applied
+          
+    CartOrder:
+      type: object
+      description: Orders for the supplied cart
+      properties:
+        clientId:
+          type: string
+          description: >-
+            ID for MySchoolBucks store that the order was recorded with
+        orderId:
+          type: string
+          description: Identifier of the order object
+        date:
+          type: string
+          format: date-time
+          description: Date the order was created
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        recipientName:
+          type: string
+          description: >-
+            Customer name tied to the order by the user account or input from a
+            guest checkout
+        recipientEmail:
+          type: string
+          description: >-
+            Customer email tied to the order by the user account or input from a
+            guest checkout
+        billingAcctDesc:
+          type: string
+          description: >-
+            Short string reference for the type of account and last 4 of account
+            number submitted to pay order
+        tag:
+          type: object
+          description: TODO - get description
+        storeId:
+          type: string
+          description: ID for MySchoolBucks store that the order has been recorded to
+        paymentMethodId:
+          type: string
+          description: >-
+            ID for the MySchoolBucks payment method configuration that this order
+            has processed through
+        cartOrderItems:
+          type: array
+          description: >-
+            Orders associated with this cart - MySchoolBucks may break a
+            cart into multiple orders based on gateway and store settings
+          items:
+            $ref: '#/components/schemas/CartOrderItem'
+            
+    CartOrderItem:
+      type: object
+      description: Order item details
+      properties:
+        orderItemId:
+          type: string
+          description: ID assigned to the order item by MySchoolBucks
+        itemName:
+          type: string
+          description: Name of the product
+        itemId:
+          type: string
+          description: ID of the product
+        unitPrice:
+          type: number
+          format: decimal
+          description: Price for each product in this line item
+        quantity:
+          type: integer
+          description: Number of products allocated to this line item
+        price:
+          type: number
+          format: decimal
+          description: Total price for this line item
+        userTxnFee:
+          type: number
+          format: decimal
+          description: MySchoolBucks fees assigned to the user for this line item
+        clientTxnFee:
+          type: number
+          format: decimal
+          description: >-
+            MySchoolBucks fees assigned to the sales district for this line item
+        salesTax:
+          type: number
+          format: decimal
+          description: Sales tax allocated to this line item
+        reference:
+          type: string
+          description: Recorded for reporting
+        properties:
+          type: array
+          description: >-
+            Line item properties - maps to the CartItem properties from the
+            request
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+        studentName:
+          type: string
+          description: Student name to be included in reporting
+            
+    CartPayment:
+      type: object
+      description: Payment for an API initiated checkout
+      properties:
+        id:
+          type: string
+          description: Identifier of the payment object
+        clientId:
+          type: string
+          description: Identifier of the client where payment was recorded
+        cartId:
+          type: string
+          description: Identifier of the cart created by the request
+        orderId:
+          type: string
+          description: Identifier of the order object
+        payerName:
+          type: string
+          description: >-
+            Name of the account holder from stored billing account or guest
+            checkout
+        date:
+          type: string
+          format: date-time
+          description: Date and time of payment
+        txnType:
+          $ref: '#/components/schemas/PaymentTxnType'
+        storeId:
+          type: string
+          description: ID for the district-level store where the sale was recorded
+        paymentMethodId:
+          type: string
+          description: >-
+            ID for the MySchoolBucks payment method configuration that this
+            payment has processed through
+        billingAcctDesc:
+          type: string
+          description: >-
+            Short string reference for the type of account and last 4 of account
+            number submitted to pay order
+        amount:
+          type: number
+          format: decimal
+          description: Amount of payment
+        salesTax:
+          type: number
+          format: decimal
+          description: Amount of sales tax for payment
+        userTxnFee:
+          type: number
+          format: decimal
+          description: Amount of fees paid by user
+        clientTxnFee:
+          type: number
+          format: decimal
+          description: Amount of fees paid by district
+        confirmation:
+          type: string
+          description: Merchant confirmation status of payment
+        batchDate:
+          type: string
+          format: date-time
+          description: >-
+            TODO - is this needed Date and time of payment gateway batch
+            settlement
+        batchNumber:
+          type: string
+          description: >-
+            TODO - is this needed Payment gateway batch settlement  reference
+            number
+        depositAmount:
+          type: number
+          format: decimal
+          description: >-
+            TODO - is this needed Amount settled to funding account with this
+            batch
+        settled:
+          type: boolean
+          description: >-
+            Status of card/bank settlement - if true, the account holder has had funds applied to their account balance
+        cartPaymentItems:
+          type: array
+          description: >-
+            Payment items associated with this cart
+          items:
+            $ref: '#/components/schemas/CartPaymentItem'
+        remainingRefundableAmount: 
+            type: number
+            format: decimal
+            description: >-
+              Remaining refundable amount that can be applied to the payment. 
+              Cart Payments that have txnType=REFUND will have a remainingRefundableAmount=NULL. 
+              All other payments will have remainingRefundableAmount >= 0.00
+    CartPaymentItem:
+      type: object
+      description: Payment item details
+      properties:
+        paymentItemId:
+          type: string
+          description: ID of the payment item assigned by MySchoolBucks
+        itemName:
+          type: string
+          description: >-
+            Identifies the name of item sold - maps to the CartItem name from
+            the request
+        itemId:
+          type: string
+          description: >-
+            Identifies the ID of item sold - maps to the CartItem ID from the
+            request
+        unitPrice:
+          type: number
+          format: decimal
+          description: Price for each product in this line item
+        quantity:
+          type: integer
+          description: Number of products allocated to this line item
+        price:
+          type: number
+          format: decimal
+          description: Total price for this line item
+        userTxnFee:
+          type: number
+          format: decimal
+          description: MySchoolBucks fees assigned to the user for this line item
+        clientTxnFee:
+          type: number
+          format: decimal
+          description: >-
+            MySchoolBucks fees assigned to the sales district for this line item
+        salesTax:
+          type: number
+          format: decimal
+          description: Sales tax allocated to this line item
+        reference:
+          type: string
+          description: TODO - get a description for what this is on MSB
+        glAccountId:
+          type: string
+          description: GL Account applied to the cart item at time of sale/refund
+        studentName:
+          type: string
+          description: >-
+            Optional student name passed with the cart item
+        properties:
+          type: array
+          description: >-
+            Line item properties - maps to the CartItem properties from the
+            request
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+            
+    CartRefundItem:
+      type: object
+      required: 
+        - itemId
+        - itemName
+        - quantity
+        - unitPrice
+      properties:
+        departmentId:
+          type: string
+          description: >-
+            ID for MySchoolBucks department that the refund should be recorded with for reporting
+        itemId:
+          type: string
+          description: >-
+            ID for the MySchoolBucks item that the refund should be recorded with for reporting
+        itemName:
+          type: string
+          description: >-
+            Name of item that the line items should display to user at checkout
+            and any receipts
+        quantity:
+          type: string
+          description: Number of the items to refund
+        unitPrice:
+          type: string
+          description: Dollar amount price for each unit refunded
+        salesTax:
+          type: string
+          description: Dollar amount total sales tax for this cart item
+        studentName:
+          type: string
+          description: Student name to be included in the reporting
+        glAccountId:
+          type: string
+          description: GL Account to which the refund for this item will be applied
+        reference:
+          type: string
+          description: Recorded for reporting
+        properties:
+          type: array
+          description: >-
+            Array of additional properties to be recorded with the order and
+            payment line items
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+    
+    ItemProperty:
+      type: object
+      description: Optional item property name and value
+      required: 
+        - name
+        - value
+      properties:
+        name:
+          type: string
+          description: >-
+            Name of item property - this will be included in the order and payment item description on MySchoolBucks
+        value:
+          type: string
+          description: >-
+            Value of named item property - this will be included in the order and payment item description on MySchoolBucks
+        displayResponse:
+          type: string
+          description: >-
+            Specifies whether or not to display the property to the user. Valid values are "visible", "hidden", or empty/null
+            
+    ClientProperty:
+      type: object
+      description: A Name/Value pair, used when getting a list of properties for a client
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Identifier for the property. Used for API calls
+        name:
+          type: string
+          description: Friendly name of the property
+          
+    ListPaging:
+      type: object
+      description: List item stats for navigating result sets
+      properties:
+        page:
+          type: integer
+          description: Current page number of result set when split by rowCount
+        prev:
+          type: string
+          description: URL of previous results from set. Will be empty for first page in set.
+        self:
+          type: string
+          description: URL of current results from set.
+        next:
+          type: string
+          description: URL of next results from set. Will be empty for final page in set.
+        total:
+          type: integer
+          description:  Total number of records that are available with current search filter options.
+  
+  #END DATA MODEL DEFINITIONS
+
+  responses:
+  #BEGIN RESPONSE DEFINITIONS
+    GetMsbPayUserResponse:
+      description: Response containing user configuration
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/MsbPayUser'
+    
+    GetCartsResponse:
+      description: Response containing a list of carts
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  carts:
+                    type: array
+                    description: List of carts and details
+                    items:
+                      $ref: '#/components/schemas/Cart'
+                  meta:
+                    $ref: '#/components/schemas/ListPaging'
+    
+    GetCartResponse:
+      description: Details of requested cart
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  cart:
+                    $ref: '#/components/schemas/Cart'
+                      
+    CreateUpdateCartResponse:
+      description: Response containing ID of the created/updated cart
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  cartId:
+                    type: string
+                    description: Identifier of the cart created by the request
+    
+    ProcessCartResponse:
+      description: Details of requested cart
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  resultCodes:
+                    type: array
+                    description: Messages for the orders created from cart request
+                    items:
+                      type: string
+                  cartId:
+                    type: string
+                    description: Identifier of the cart processed by the request
+                  paymentIds:
+                    type: array
+                    description: Payment IDs for the cart processed by the request
+                    items:
+                      type: string
+    
+    BooleanResponse:
+      description: Response with a true/false value
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  responseBoolean:
+                    type: boolean
+                    description: True/False value for the outcome of the method
+                    
+    GetCartOrdersResponse:
+      description: Details of requested cart
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  cartOrders:
+                    type: array
+                    description: List of Orders associated to the Cart processing
+                    items:
+                      $ref: '#/components/schemas/CartOrder'
+                      
+    CartPaymentRefundResponse:
+      description: Details of requested cart
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  paymentId:
+                    type: string
+                    description: Identifier of the payment that received refund request
+                  cartId:
+                    type: string
+                    description: Identifier of the cart containing the payment
+                    
+    SearchPaymentsResponse:
+      description: List of payments meeting filter criteria
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  cartPayments:
+                    type: array
+                    description: List payments for the Cart
+                    items:
+                      $ref: '#/components/schemas/CartPayment'
+                  meta:
+                    $ref: '#/components/schemas/ListPaging'
+                      
+    SearchPaymentMethodsResponse:
+      description: List of IDs for payment methods
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  paymentMethods:
+                    type: array
+                    description: Valid payment method names and IDs for the given client
+                    items:
+                      $ref: '#/components/schemas/ClientProperty'
+                  meta:
+                    $ref: '#/components/schemas/ListPaging'
+                    
+    SearchStoresResponse:
+      description: List of IDs for stores
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  stores:
+                    type: array
+                    description: Valid store names and IDs for the given client
+                    items:
+                      $ref: '#/components/schemas/ClientProperty'
+                  meta:
+                    $ref: '#/components/schemas/ListPaging'
+                    
+    SearchDepartmentsResponse:
+      description: List of IDs for departments
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  departments:
+                    type: array
+                    description: Valid department names and IDs for the given client
+                    items:
+                      $ref: '#/components/schemas/ClientProperty'
+                  meta:
+                    $ref: '#/components/schemas/ListPaging'
+                    
+    SearchGLAccountsResponse:
+      description: List of IDs for G/L Accounts
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/MsbPayResponse'
+              - type: object
+                properties:
+                  glaccounts:
+                    type: array
+                    description: Valid G/L Account names and IDs for the given client
+                    items:
+                      $ref: '#/components/schemas/ClientProperty'
+                  meta:
+                    $ref: '#/components/schemas/ListPaging'
+                    
+  #END RESPONSE DEFINITIONS
+  
+  parameters:
+  #BEGIN PARAMETER DEFINITIONS
+    Authorization:
+      name: Authorization
+      in: header
+      description: Login details to authenticate call.
+      required: true
+      schema: 
+        type: string
+      example: demoaccount:EBNF-JNEC-HKHL-EALD-JMFJ-BKOM-PHNA-CKLP
+    CartId:
+      name: cartId
+      in: path
+      description: Cart identifier assigned by MySchoolBucks.
+      required: true
+      schema:
+        type: string
+    PaymentId:
+      name: paymentId
+      in: path
+      description: Payment identifier assigned by MySchoolBucks
+      required: true
+      schema:
+        type: string
+    ClientId:
+      name: clientId
+      in: path
+      description: Client identifier assigned by MySchoolBucks
+      required: true
+      schema:
+        type: string
+    PageParam:
+      name: page
+      in: query
+      description: Requests page number for query results returning more than (rowCount) items
+      required: false
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    RowCountParam:
+      name: rowCount
+      in: query
+      description: Requests results to be returned in groups of no more than (rowCount) items
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    SearchTextParam:
+      name: searchText
+      in: query
+      description: Text to use to filter the items
+      required: false
+      schema:
+        type: string
+  #END PARAMETER DEFINITIONS
+  
+  requestBodies:
+    CreateUpdateCartRequest:
+      description: 
+            Item ID must be fewer than or equal to 60 characters, and may contain
+            only letters, numbers, underscores, dashes, periods, or at signs.<br />
+            Item name must be fewer than or equal to 80 characters.<br />
+            Unit price must be a positive number.<br />
+            Quantity must be greater than 0.<br /><br />
+            OPTIONAL FIELDS<br />
+            Student name must fewer than or equal to 60 characters.<br />
+            Reference must be fewer than or equal to 80 characters.<br />
+            Property names must not be empty or null.<br />
+            Property Display Response must be "visible", "hidden", or null/empty.<br />
+            Redirect URL and Return to Site URL must be fewer than or equal to 1900 characters.<br />
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - cartItems
+            properties:
+              cartItems:
+                type: array
+                description: Array of cart items to be paid for through Pay API
+                items:
+                  $ref: '#/components/schemas/CartItem'
+              redirectUrl:
+                type: string
+                description: >-
+                  Return URL for thandoff of browser page after user enters payment information on MySchoolBucks
+              allowDuplicatePayments:
+                type: string
+                description: >-
+                  Provide the string value "true" in this field to suppress the duplicate payment detection feature
+              returnToSiteUrl:
+                type: string
+                description: >-
+                  Supply a URL in this field to display a button at checkout for users to return to your site to modify their cart
+              loginPolicy:
+                type: string
+                description: >-
+                  When set to "optional", allows the user to use guest checkout. If set to "required", user must log into an account. If set to "none", user is not prompted to log in and immediately starts checkout. If set to null, use district defaults.
+              checkoutStyle:
+                type: string
+                description: Checkout style to use. Either "express" or null
+              paymentPreauthPolicy:
+                type: string
+                description: Payment preauthorization policy for the cart. Valid options are "none", "fullpay", or null
+              webhookSubscriptions:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookSubscription'
+                  
+    CartPaymentRefundRequest:
+      description:
+            Item ID must be fewer than or equal to 60 characters, and may contain
+            only letters, numbers, underscores, dashes, periods, or at signs.<br />
+            Item name must be fewer than or equal to 80 characters.<br />
+            Unit price must be a positive number.<br />
+            Quantity must be greater than 0.<br /><br />
+            OPTIONAL FIELDS<br />
+            Student name must fewer than or equal to 60 characters.<br />
+            Reference must be fewer than or equal to 80 characters.<br />
+            Property names must not be empty or null.<br />
+            Property Display Response must be "visible", "hidden", or null/empty.<br />
+            Redirect URL and Return to Site URL must be fewer than or equal to 1900 characters.<br />
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              refundItems:
+                type: array
+                description: Array of payment items to be refunded through Pay API
+                items:
+                  $ref: '#/components/schemas/CartRefundItem'
+              refundFullAmount:
+                type: boolean
+                description: If set to true, refund entire remaining order value, ignoring the request item array
+              refundReason:
+                type: string
+                description: Reason to log for the refund action
