@@ -1,3 +1,7 @@
+# DO NOT EDIT
+# This file was generated from the API's specification.
+
+
 from enum import Enum
 from typing import List, Literal, TypedDict
 
