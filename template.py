@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Literal, TypedDict
 
 
-class APIServers(Enum):
+class APIServer(Enum):
     {% for server in api.servers -%}
         {{ server.description.split(' ')[0].upper() }} = '{{ server.url }}'
     {% endfor %}
@@ -32,3 +32,21 @@ class APIServers(Enum):
 {% endfor -%}
 
 
+{% for requestBodyName, requestBody in api.components.requestBodies.items() -%}
+    {% set properties = requestBody.content['application/json'].schema.properties -%}
+    class {{ requestBodyName }}(TypedDict, total=False):
+    """
+    {{ requestBody.description | replace('<br />', '\n   ') }}
+    """
+    {% for propertyName, property in properties.items() -%}
+        {{ propertyName }}: {{ openapi_type_to_python(property) }}
+    {% endfor %}
+{% endfor -%}
+
+
+{% for parameterName, parameter in api.components.parameters.items() -%}
+    {%- if parameter.in == "query" -%}
+    class {{ parameterName }}(TypedDict, total=False):
+    {{ parameter.name }}: {{ openapi_type_to_python(parameter.schema) }}
+    {% endif %}
+{% endfor -%}
